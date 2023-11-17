@@ -1,0 +1,52 @@
+```yaml
+version: '3.8'
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${openai_api_key}
+      - PALM_API_KEY=${palm_api_key}
+      - CLAUDE_API_KEY=${claude_api_key}
+      - DATABASE_URI=${database_uri}
+    volumes:
+      - .:/app
+    command: python backend/openai_integration.py backend/palm_api_integration.py backend/claude_integration.py backend/data_engineering.py backend/security.py backend/testing.py
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - WEBSOCKET_URL=${websocket_url}
+    volumes:
+      - .:/app
+    command: npm run start
+
+  devops:
+    build: ./devops
+    volumes:
+      - .:/app
+    command: python devops/ci_cd.py
+
+  compliance:
+    build: ./compliance
+    volumes:
+      - .:/app
+    command: python compliance/data_protection.py compliance/ai_ethics.py
+
+  pr_submission:
+    build: ./pr_submission
+    volumes:
+      - .:/app
+    command: python pr_submission/code_comments.md pr_submission/performance_metrics.md pr_submission/security_audit.md pr_submission/api_usage.md
+
+volumes:
+  app:
+
+networks:
+  default:
+    external:
+      name: nginx-proxy
+```
