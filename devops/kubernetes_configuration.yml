@@ -1,0 +1,80 @@
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-agent-deployment
+  labels:
+    app: ai-agent
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ai-agent
+  template:
+    metadata:
+      labels:
+        app: ai-agent
+    spec:
+      containers:
+      - name: ai-agent
+        image: ai-agent:1.0.0
+        ports:
+        - containerPort: 8080
+        env:
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openai-secret
+              key: openai_api_key
+        - name: PALM_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: palm-secret
+              key: palm_api_key
+        - name: CLAUDE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: claude-secret
+              key: claude_api_key
+        - name: DATABASE_URI
+          valueFrom:
+            secretKeyRef:
+              name: database-secret
+              key: database_uri
+        - name: WEBSOCKET_URL
+          valueFrom:
+            secretKeyRef:
+              name: websocket-secret
+              key: websocket_url
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-agent-service
+spec:
+  selector:
+    app: ai-agent
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+---
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ai-agent-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ai-agent-deployment
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50
+```
